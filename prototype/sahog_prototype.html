@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahog — Clickable Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FAF1DC;
+    --cream-deep:#F3E7C9;
+    --card:#FFFCF3;
+    --ink:#2B1710;
+    --ink-soft:#6B5744;
+    --ink-faint:#9C8973;
+    --terracotta:#C1502D;
+    --terracotta-soft:#EFC1AA;
+    --terracotta-tint:#FBE9DF;
+    --sage:#7E9473;
+    --sage-soft:#D8E2D1;
+    --sage-tint:#EEF3EA;
+    --gold:#D9A441;
+    --line:#E6D6AE;
+    --radius-lg:28px;
+    --radius-md:18px;
+    --radius-sm:10px;
+    --shadow:0 30px 60px -20px rgba(43,23,16,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 1px 1px, var(--line) 1.4px, transparent 1.4px) 0 0/26px 26px,
+      var(--cream);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:48px 20px 80px;
+  }
+  h1,h2,h3,.display{ font-family:'Fredoka', sans-serif; font-weight:600; letter-spacing:-0.01em; }
+  button{ font-family:inherit; cursor:pointer; }
+  a{ color:inherit; }
+
+  /* ---------- Page header / prototype chrome ---------- */
+  .page-head{ text-align:center; max-width:640px; margin-bottom:14px; }
+  .kicker{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--terracotta); font-weight:600; margin-bottom:10px;
+  }
+  .kicker svg{ width:14px; height:14px; }
+  .page-head h1{ font-size:32px; margin:0 0 6px; }
+  .page-head p{ margin:0; color:var(--ink-soft); font-size:15px; line-height:1.5; }
+
+  .dot-row{ display:flex; gap:6px; align-items:center; justify-content:center; margin:18px 0; }
+  .dot-row span{ width:8px; height:8px; border-radius:50%; background:var(--ink); }
+  .dot-row.small span{ width:6px; height:6px; }
+  .dot-row.accent span:nth-child(odd){ background:var(--terracotta); }
+
+  .quicknav{
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    max-width:640px; margin-bottom:36px;
+  }
+  .quicknav button{
+    border:1.5px solid var(--line); background:var(--card);
+    color:var(--ink-soft); font-size:13px; font-weight:500;
+    padding:8px 14px; border-radius:999px; transition:all .15s ease;
+  }
+  .quicknav button:hover{ border-color:var(--terracotta); color:var(--terracotta); }
+  .quicknav button.active{ background:var(--ink); border-color:var(--ink); color:var(--cream); }
+  .quicknav button:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2.5px solid var(--terracotta); outline-offset:2px;
+  }
+
+  /* ---------- Phone frame ---------- */
+  .phone-wrap{ position:relative; }
+  .phone{
+    width:390px; height:812px; background:#111; border-radius:52px;
+    padding:14px; box-shadow:var(--shadow);
+    position:relative;
+  }
+  .phone::before{
+    content:""; position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    width:120px; height:28px; background:#111; border-radius:0 0 18px 18px; z-index:30;
+  }
+  .screen-frame{
+    width:100%; height:100%; background:var(--cream); border-radius:38px;
+    overflow:hidden; position:relative;
+  }
+  .statusbar{
+    height:44px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 26px; font-size:13px; font-weight:600; color:var(--ink);
+    position:relative; z-index:20; flex-shrink:0;
+  }
+  .statusbar .icons{ display:flex; gap:5px; align-items:center; }
+  .statusbar .bars{ display:flex; gap:2px; align-items:flex-end; }
+  .statusbar .bars span{ width:3px; background:var(--ink); border-radius:1px; }
+  .statusbar .bars span:nth-child(1){ height:4px; } .statusbar .bars span:nth-child(2){ height:6px; }
+  .statusbar .bars span:nth-child(3){ height:8px; } .statusbar .bars span:nth-child(4){ height:10px; }
+  .statusbar .batt{ width:22px; height:11px; border:1.4px solid var(--ink); border-radius:3px; position:relative; }
+  .statusbar .batt::after{ content:""; position:absolute; right:-4px; top:3px; width:2px; height:5px; background:var(--ink); border-radius:0 1px 1px 0; }
+  .statusbar .batt::before{ content:""; position:absolute; inset:1.5px; width:70%; background:var(--ink); border-radius:1px; }
+
+  .screen-body{ height:calc(100% - 44px); position:relative; overflow:hidden; }
+  .screen{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    opacity:0; transform:translateX(14px); pointer-events:none;
+    transition:opacity .28s ease, transform .32s ease;
+  }
+  .screen.active{ opacity:1; transform:translateX(0); pointer-events:auto; }
+  @media (prefers-reduced-motion: reduce){ .screen{ transition:none; } }
+
+  .scroll{ flex:1; overflow-y:auto; padding:18px 20px 100px; }
+  .scroll::-webkit-scrollbar{ width:0; }
+
+  /* ---------- shared bits ---------- */
+  .topbar{ display:flex; align-items:center; gap:12px; padding:8px 20px 4px; }
+  .topbar h2{ font-size:20px; margin:0; }
+  .iconbtn{
+    width:36px; height:36px; border-radius:50%; border:1.5px solid var(--line);
+    background:var(--card); display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; color:var(--ink);
+  }
+  .iconbtn svg{ width:18px; height:18px; }
+  .subtitle{ color:var(--ink-soft); font-size:13.5px; margin:2px 0 0; padding:0 20px; }
+
+  .search-bar{
+    display:flex; align-items:center; gap:10px; background:var(--card);
+    border:1.5px solid var(--line); border-radius:999px; padding:12px 16px; margin-top:16px;
+  }
+  .search-bar svg{ width:18px; height:18px; color:var(--ink-faint); flex-shrink:0; }
+  .search-bar input{
+    border:none; background:none; outline:none; font-size:14.5px; color:var(--ink);
+    width:100%; font-family:inherit;
+  }
+  .search-bar input::placeholder{ color:var(--ink-faint); }
+  .suggest-row{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .suggest-pill{
+    font-size:12.5px; background:var(--sage-tint); color:var(--sage);
+    border:1px solid var(--sage-soft); padding:6px 12px; border-radius:999px; font-weight:500;
+  }
+
+  .scan-card{
+    margin-top:16px; border:1.8px dashed var(--terracotta-soft); border-radius:var(--radius-md);
+    background:var(--terracotta-tint); padding:18px; display:flex; align-items:center; gap:14px;
+  }
+  .scan-card .ic{
+    width:44px; height:44px; border-radius:50%; background:var(--terracotta); color:#fff;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .scan-card .ic svg{ width:22px; height:22px; }
+  .scan-card .txt strong{ display:block; font-size:14.5px; margin-bottom:2px; }
+  .scan-card .txt span{ font-size:12.5px; color:var(--ink-soft); }
+
+  .section-label{
+    font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; font-weight:600;
+    color:var(--ink-faint); margin:22px 0 10px;
+  }
+  .chip-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    display:flex; align-items:center; gap:7px; background:var(--card); border:1.4px solid var(--line);
+    border-radius:999px; padding:8px 8px 8px 12px; font-size:13.5px; font-weight:500;
+  }
+  .chip button{ background:var(--cream-deep); border:none; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .chip button svg{ width:9px; height:9px; }
+
+  .btn-primary{
+    width:100%; background:var(--terracotta); color:#fff; border:none; border-radius:999px;
+    padding:15px; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow:0 10px 22px -8px rgba(193,80,45,.55);
+  }
+  .btn-primary svg{ width:16px; height:16px; }
+  .btn-outline{
+    width:100%; background:none; color:var(--sage); border:1.6px solid var(--sage); border-radius:999px;
+    padding:13px; font-size:14.5px; font-weight:600;
+  }
+  .btn-ghost{
+    background:none; border:none; color:var(--terracotta); font-weight:600; font-size:14px; padding:10px;
+  }
+
+  .sticky-cta{ padding:14px 20px 22px; background:linear-gradient(0deg, var(--cream) 60%, transparent); }
+
+  .bottom-nav{
+    display:flex; border-top:1.4px solid var(--line); background:var(--card);
+    padding:10px 8px calc(env(safe-area-inset-bottom,0) + 10px);
+  }
+  .nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; color:var(--ink-faint); font-size:10.5px; font-weight:600;
+  }
+  .nav-item svg{ width:20px; height:20px; }
+  .nav-item.active{ color:var(--terracotta); }
+
+  /* ---------- Login ---------- */
+  .login-wrap{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:0 30px; }
+  .logo-mark{
+    width:64px; height:64px; border-radius:20px; background:var(--terracotta); color:#fff;
+    display:flex; align-items:center; justify-content:center; margin:0 auto 18px;
+  }
+  .logo-mark svg{ width:30px; height:30px; }
+  .login-wrap h1{ text-align:center; font-size:28px; margin:0 0 4px; }
+  .login-wrap .tag{ text-align:center; color:var(--ink-soft); font-size:14px; margin-bottom:32px; }
+  .field{ margin-bottom:14px; }
+  .field label{ font-size:12.5px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  .field input{
+    width:100%; border:1.6px solid var(--line); background:var(--card); border-radius:var(--radius-sm);
+    padding:13px 14px; font-size:14.5px; font-family:inherit; outline:none;
+  }
+  .field input:focus-visible{ border-color:var(--terracotta); }
+  .switch-line{ text-align:center; font-size:13.5px; color:var(--ink-soft); margin-top:18px; }
+  .switch-line b{ color:var(--terracotta); font-weight:600; }
+
+  /* ---------- Scan viewfinder ---------- */
+  .viewfinder{
+    flex:1; margin:16px 20px; border-radius:var(--radius-lg); background:#241812;
+    position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .vf-corner{ position:absolute; width:34px; height:34px; border-color:var(--terracotta-soft); }
+  .vf-corner.tl{ top:20px; left:20px; border-top:3px solid; border-left:3px solid; border-radius:8px 0 0 0; }
+  .vf-corner.tr{ top:20px; right:20px; border-top:3px solid; border-right:3px solid; border-radius:0 8px 0 0; }
+  .vf-corner.bl{ bottom:20px; left:20px; border-bottom:3px solid; border-left:3px solid; border-radius:0 0 0 8px; }
+  .vf-corner.br{ bottom:20px; right:20px; border-bottom:3px solid; border-right:3px solid; border-radius:0 0 8px 0; }
+  .vf-hint{ color:#EAD9C4; font-size:13.5px; text-align:center; padding:0 40px; opacity:.85; }
+  .vf-hint svg{ width:34px; height:34px; margin-bottom:10px; color:var(--terracotta-soft); }
+  .scan-controls{ padding:20px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .shutter{
+    width:66px; height:66px; border-radius:50%; background:#fff; border:4px solid var(--terracotta);
+  }
+  .upload-link{ font-size:13.5px; color:var(--ink-soft); font-weight:500; display:flex; align-items:center; gap:6px; }
+  .upload-link svg{ width:15px; height:15px; }
+
+  .scanning-pulse{
+    width:120px; height:120px; border-radius:50%; border:4px solid var(--terracotta-soft);
+    border-top-color:var(--terracotta); animation:spin 1s linear infinite; margin-bottom:22px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .scanning-pulse{ animation:none; } }
+  .scanning-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .scanning-wrap p{ font-size:14.5px; color:var(--ink-soft); font-weight:500; }
+
+  /* ---------- Confirm checklist ---------- */
+  .scanned-thumb{
+    margin:14px 20px 4px; height:110px; border-radius:var(--radius-md);
+    background:linear-gradient(135deg, #E7D9B8, #CBB68A);
+    display:flex; align-items:center; justify-content:center; color:#5C4A2E;
+  }
+  .scanned-thumb svg{ width:34px; height:34px; }
+  .confirm-row{
+    display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--line);
+  }
+  .confirm-row:last-of-type{ border-bottom:none; }
+  .cbox{
+    width:24px; height:24px; border-radius:8px; border:1.8px solid var(--sage); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; background:var(--sage);
+  }
+  .cbox svg{ width:13px; height:13px; color:#fff; }
+  .cbox.off{ background:none; border-color:var(--line); }
+  .cbox.off svg{ display:none; }
+  .confirm-row .name{ font-size:14.5px; font-weight:500; flex:1; }
+  .confirm-row .cat{ font-size:11.5px; color:var(--ink-faint); background:var(--cream-deep); padding:3px 9px; border-radius:999px; }
+  .add-missed{
+    display:flex; align-items:center; gap:10px; padding:12px 4px; color:var(--terracotta); font-size:14px; font-weight:600;
+  }
+  .add-missed svg{ width:18px; height:18px; }
+
+  /* ---------- Recipes list ---------- */
+  .filter-row{ display:flex; gap:8px; margin:14px 0 6px; overflow-x:auto; }
+  .filter-pill{
+    white-space:nowrap; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:999px;
+    border:1.5px solid var(--line); background:var(--card); color:var(--ink-soft); flex-shrink:0;
+  }
+  .filter-pill.on{ background:var(--ink); border-color:var(--ink); color:var(--cream); }
+
+  .recipe-card{
+    display:flex; gap:12px; background:var(--card); border:1.4px solid var(--line);
+    border-radius:var(--radius-md); padding:12px; margin-top:12px; text-align:left; width:100%;
+  }
+  .recipe-thumb{
+    width:64px; height:64px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .recipe-thumb svg{ width:26px; height:26px; }
+  .recipe-info{ flex:1; min-width:0; }
+  .recipe-info h3{ font-size:14.5px; margin:0 0 4px; font-weight:600; }
+  .recipe-meta{ display:flex; gap:10px; font-size:12px; color:var(--ink-soft); align-items:center; }
+  .recipe-meta .missing{ color:var(--terracotta); font-weight:600; }
+  .match-ring{
+    width:42px; height:42px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  }
+  .match-ring .inner{
+    width:33px; height:33px; border-radius:50%; background:var(--card); display:flex; align-items:center; justify-content:center;
+    font-size:10.5px; font-weight:700; font-family:'Fredoka',sans-serif;
+  }
+
+  /* ---------- Recipe detail ---------- */
+  .detail-hero{
+    height:180px; position:relative; display:flex; align-items:flex-end; padding:16px 20px;
+    background:linear-gradient(160deg, #92A984, #5F7454);
+  }
+  .detail-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, rgba(20,15,8,.55), transparent 60%); }
+  .detail-hero .hero-top{ position:absolute; top:16px; left:16px; right:16px; display:flex; justify-content:space-between; z-index:2; }
+  .detail-hero h2{ position:relative; z-index:2; color:#fff; font-size:22px; margin:0; }
+  .detail-hero .hero-top .iconbtn{ background:rgba(255,255,255,.9); border:none; }
+  .detail-meta{ display:flex; gap:14px; padding:12px 20px 0; font-size:12.5px; color:var(--ink-soft); }
+  .detail-meta span{ display:flex; align-items:center; gap:5px; }
+  .detail-meta svg{ width:14px; height:14px; }
+
+  .match-banner{
+    display:flex; align-items:center; gap:14px; margin:16px 20px; padding:14px; border-radius:var(--radius-md);
+    background:var(--sage-tint); border:1.4px solid var(--sage-soft);
+  }
+  .match-banner .ring-lg{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .match-banner .ring-lg .inner{ width:44px; height:44px; border-radius:50%; background:var(--sage-tint); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; font-family:'Fredoka',sans-serif; }
+  .match-banner strong{ font-size:14px; display:block; }
+  .match-banner span{ font-size:12px; color:var(--ink-soft); }
+
+  .col-heads{ display:flex; gap:10px; padding:0 20px; }
+  .have-col, .miss-col{ flex:1; border-radius:var(--radius-md); padding:12px; }
+  .have-col{ background:var(--sage-tint); border:1.2px solid var(--sage-soft); }
+  .miss-col{ background:var(--terracotta-tint); border:1.2px solid var(--terracotta-soft); }
+  .col-title{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .have-col .col-title{ color:var(--sage); } .miss-col .col-title{ color:var(--terracotta); }
+  .ing-li{ font-size:13px; padding:4px 0; color:var(--ink); }
+
+  .steps{ padding:0 20px; margin-top:8px; }
+  .step{ display:flex; gap:12px; padding:10px 0; }
+  .step-num{
+    width:24px; height:24px; border-radius:50%; background:var(--ink); color:var(--cream); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; font-family:'Fredoka',sans-serif;
+  }
+  .step p{ margin:0; font-size:13.5px; color:var(--ink-soft); line-height:1.5; padding-top:2px; }
+  .detail-actions{ padding:14px 20px 22px; display:flex; flex-direction:column; gap:10px; background:linear-gradient(0deg, var(--cream) 65%, transparent); }
+
+  /* ---------- Planner ---------- */
+  .day-row{
+    display:flex; align-items:center; gap:12px; background:var(--card); border:1.4px solid var(--line);
+    border-radius:var(--radius-md); padding:10px; margin-top:10px;
+  }
+  .day-badge{
+    width:42px; height:42px; border-radius:12px; background:var(--cream-deep); flex-shrink:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .day-badge .d{ font-size:9.5px; text-transform:uppercase; color:var(--ink-faint); font-weight:700; }
+  .day-badge .n{ font-size:14px; font-weight:700; font-family:'Fredoka',sans-serif; }
+  .day-recipe{ flex:1; min-width:0; }
+  .day-recipe strong{ display:block; font-size:13.5px; font-weight:600; }
+  .day-recipe span{ font-size:11.5px; color:var(--ink-soft); }
+  .swap-btn{
+    font-size:11.5px; font-weight:600; color:var(--terracotta); background:var(--terracotta-tint);
+    border:none; border-radius:999px; padding:7px 12px; flex-shrink:0;
+  }
+
+  /* ---------- Grocery receipt ---------- */
+  .receipt{
+    margin:16px 20px 0; background:var(--card); border-radius:var(--radius-md) var(--radius-md) 4px 4px;
+    padding:18px 18px 4px; position:relative; font-family:'IBM Plex Mono', monospace;
+    box-shadow:0 12px 24px -14px rgba(43,23,16,.3);
+  }
+  .receipt::before{
+    content:""; position:absolute; left:0; right:0; bottom:-1px; height:14px;
+    background:
+      linear-gradient(-45deg, var(--cream) 8px, transparent 0),
+      linear-gradient(45deg, var(--cream) 8px, transparent 0);
+    background-size:16px 16px; background-position:bottom;
+  }
+  .receipt h4{ text-align:center; font-size:13px; letter-spacing:.06em; margin:0 0 2px; font-family:'IBM Plex Mono',monospace; }
+  .receipt .sub{ text-align:center; font-size:10.5px; color:var(--ink-faint); margin-bottom:12px; }
+  .receipt-cat{ font-size:10.5px; font-weight:600; color:var(--terracotta); letter-spacing:.05em; margin:14px 0 6px; }
+  .rline{ display:flex; align-items:center; gap:10px; padding:5px 0; font-size:12.5px; }
+  .rline .rbox{ width:16px; height:16px; border-radius:4px; border:1.6px solid var(--sage); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .rline .rbox svg{ width:9px; height:9px; color:var(--sage); display:none; }
+  .rline.done .rbox{ background:var(--sage); }
+  .rline.done .rbox svg{ display:block; color:#fff; }
+  .rline.done .rname{ text-decoration:line-through; color:var(--ink-faint); }
+  .rline .rname{ flex:1; }
+  .rline .rprice{ color:var(--ink-soft); }
+  .receipt-total{
+    display:flex; justify-content:space-between; border-top:1.5px dashed var(--line); margin-top:14px;
+    padding:12px 0 16px; font-size:13px; font-weight:700;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ SVG ICON SPRITE ============ -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="i-fork" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 2v8M9.5 2v6.5a2.5 2.5 0 0 1-5 0V2M12.5 2v20M17 2c-1.8 0-3 2-3 5s1.2 5 3 5v10"/>
+    </g>
+    <g id="i-search" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.3-4.3"/>
+    </g>
+    <g id="i-camera" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>
+    </g>
+    <g id="i-check" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12l5 5L20 6"/>
+    </g>
+    <g id="i-back" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 18l-6-6 6-6"/>
+    </g>
+    <g id="i-heart" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20s-7-4.4-9.3-8.8C1.2 8 2.4 4.8 5.6 4.1 7.8 3.6 10 4.6 12 7c2-2.4 4.2-3.4 6.4-2.9 3.2.7 4.4 3.9 2.9 7.1C19 15.6 12 20 12 20z"/>
+    </g>
+    <g id="i-pantry" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 21V9l8-5 8 5v12"/><path d="M4 13h16"/><path d="M9 21v-5h6v5"/>
+    </g>
+    <g id="i-book" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5z"/>
+    </g>
+    <g id="i-calendar" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/>
+    </g>
+    <g id="i-cart" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 4h2l2.2 11.6a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L20.5 8H6"/><circle cx="9.5" cy="21" r="1.4"/><circle cx="17" cy="21" r="1.4"/>
+    </g>
+    <g id="i-x" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 5l14 14M19 5L5 19"/>
+    </g>
+    <g id="i-plus" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12h14"/>
+    </g>
+    <g id="i-clock" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>
+    </g>
+    <g id="i-serve" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v3M9 3v3M15 3v3M4 10c0 3 3.5 5 8 5s8-2 8-5H4z"/><path d="M6 15l1 6M18 15l-1 6M9 15l.5 6M15 15l-.5 6"/>
+    </g>
+    <g id="i-image" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 15.5l-5-4.5-4 3.5-2.5-2-5 4.5"/>
+    </g>
+    <g id="i-bag" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 8h12l1 12.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20.5z"/><path d="M8.5 8V6a3.5 3.5 0 0 1 7 0v2"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="page-head">
+  <div class="kicker"><svg viewBox="0 0 24 24"><use href="#i-fork"/></svg> Clickable Prototype</div>
+  <h1>Sahog</h1>
+  <p>Cook with what you've got. Click through the screens below — every button is live, or jump straight to any screen with the pills.</p>
+</div>
+
+<div class="dot-row accent"><span></span><span></span><span></span><span></span></div>
+
+<div class="quicknav" id="quicknav">
+  <button data-go="screen-login" class="active">Log In</button>
+  <button data-go="screen-pantry">Pantry</button>
+  <button data-go="screen-scan">Scan</button>
+  <button data-go="screen-confirm">Confirm</button>
+  <button data-go="screen-recipes">Recipes</button>
+  <button data-go="screen-detail">Recipe Detail</button>
+  <button data-go="screen-planner">Weekly Plan</button>
+  <button data-go="screen-grocery">Grocery List</button>
+</div>
+
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="screen-frame">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="icons">
+          <span class="bars"><span></span><span></span><span></span><span></span></span>
+          <span class="batt"></span>
+        </span>
+      </div>
+
+      <div class="screen-body">
+
+        <!-- ================= LOGIN ================= -->
+        <div class="screen active" id="screen-login">
+          <div class="login-wrap">
+            <div class="logo-mark"><svg viewBox="0 0 24 24"><use href="#i-fork"/></svg></div>
+            <h1>Sahog</h1>
+            <div class="tag">Cook with what you've got.</div>
+            <div class="field">
+              <label>Email</label>
+              <input type="text" placeholder="you@dorm.edu" readonly>
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" placeholder="••••••••" readonly>
+            </div>
+            <button class="btn-primary" data-go="screen-pantry" style="margin-top:8px;">Log In</button>
+            <div class="switch-line">New here? <b>Create an account</b></div>
+          </div>
+        </div>
+
+        <!-- ================= PANTRY ================= -->
+        <div class="screen" id="screen-pantry">
+          <div class="topbar" style="padding-top:14px;">
+            <div>
+              <h2>My Pantry</h2>
+              <p class="subtitle" style="padding:0;">Good evening — here's what you've got</p>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="search-bar">
+              <svg viewBox="0 0 24 24"><use href="#i-search"/></svg>
+              <input type="text" placeholder="Add an ingredient…" readonly>
+            </div>
+            <div class="suggest-row">
+              <span class="suggest-pill">+ garlic</span>
+              <span class="suggest-pill">+ calamansi</span>
+              <span class="suggest-pill">+ bagoong</span>
+            </div>
+
+            <div class="scan-card" role="button" data-go="screen-scan">
+              <div class="ic"><svg viewBox="0 0 24 24"><use href="#i-camera"/></svg></div>
+              <div class="txt">
+                <strong>Snap your fridge or grocery haul</strong>
+                <span>We'll pick out the ingredients for you</span>
+              </div>
+            </div>
+
+            <div class="section-label">In your pantry · 8 items</div>
+            <div class="chip-grid">
+              <span class="chip">Rice <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+              <span class="chip">Eggs <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+              <span class="chip">Garlic <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+              <span class="chip">Onion <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+              <span class="chip">Tomato <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+              <span class="chip">Soy Sauce <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+              <span class="chip">Mung Beans <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+              <span class="chip">Eggplant <button><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></span>
+            </div>
+          </div>
+          <div class="sticky-cta">
+            <button class="btn-primary" data-go="screen-recipes">See Matching Recipes</button>
+          </div>
+          <div class="bottom-nav">
+            <button class="nav-item active" data-go="screen-pantry"><svg viewBox="0 0 24 24"><use href="#i-pantry"/></svg>Pantry</button>
+            <button class="nav-item" data-go="screen-recipes"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg>Recipes</button>
+            <button class="nav-item" data-go="screen-planner"><svg viewBox="0 0 24 24"><use href="#i-calendar"/></svg>Planner</button>
+            <button class="nav-item" data-go="screen-grocery"><svg viewBox="0 0 24 24"><use href="#i-cart"/></svg>List</button>
+          </div>
+        </div>
+
+        <!-- ================= SCAN: CAMERA ================= -->
+        <div class="screen" id="screen-scan">
+          <div class="topbar" style="padding-top:14px;">
+            <button class="iconbtn" data-go="screen-pantry"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+            <h2>Scan Ingredients</h2>
+          </div>
+          <div class="viewfinder">
+            <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
+            <div class="vf-corner bl"></div><div class="vf-corner br"></div>
+            <div class="vf-hint">
+              <svg viewBox="0 0 24 24"><use href="#i-camera"/></svg>
+              <div>Point your camera at your fridge, pantry shelf, or grocery haul</div>
+            </div>
+          </div>
+          <div class="scan-controls">
+            <button class="shutter" aria-label="Capture photo" data-go="screen-scanning"></button>
+            <span class="upload-link"><svg viewBox="0 0 24 24"><use href="#i-image"/></svg>Upload from gallery instead</span>
+          </div>
+        </div>
+
+        <!-- ================= SCANNING (loading) ================= -->
+        <div class="screen" id="screen-scanning">
+          <div class="topbar" style="padding-top:14px;">
+            <button class="iconbtn" data-go="screen-scan"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+            <h2>Scan Ingredients</h2>
+          </div>
+          <div class="scanning-wrap">
+            <div class="scanning-pulse"></div>
+            <p>Identifying ingredients…</p>
+            <button class="btn-ghost" data-go="screen-confirm">Skip</button>
+          </div>
+        </div>
+
+        <!-- ================= CONFIRM CHECKLIST ================= -->
+        <div class="screen" id="screen-confirm">
+          <div class="topbar" style="padding-top:14px;">
+            <button class="iconbtn" data-go="screen-scan"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+            <h2>Confirm Ingredients</h2>
+          </div>
+          <p class="subtitle">Uncheck anything we got wrong</p>
+          <div class="scanned-thumb"><svg viewBox="0 0 24 24"><use href="#i-image"/></svg></div>
+          <div class="scroll" style="padding-top:6px;">
+            <div class="confirm-row"><span class="cbox"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="name">Eggplant</span><span class="cat">Produce</span></div>
+            <div class="confirm-row"><span class="cbox"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="name">Calamansi</span><span class="cat">Produce</span></div>
+            <div class="confirm-row"><span class="cbox"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="name">Dried Shrimp</span><span class="cat">Protein</span></div>
+            <div class="confirm-row"><span class="cbox off"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="name">Bok Choy <span style="color:var(--ink-faint); font-weight:400;">(not quite right?)</span></span><span class="cat">Produce</span></div>
+            <div class="confirm-row"><span class="cbox"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="name">Squash</span><span class="cat">Produce</span></div>
+            <div class="add-missed"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg>Add something we missed</div>
+          </div>
+          <div class="sticky-cta">
+            <button class="btn-primary" data-go="screen-pantry"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Add to Pantry</button>
+          </div>
+        </div>
+
+        <!-- ================= RECIPES LIST ================= -->
+        <div class="screen" id="screen-recipes">
+          <div class="topbar" style="padding-top:14px;">
+            <div>
+              <h2>Recipes for You</h2>
+              <p class="subtitle" style="padding:0;">Based on 8 ingredients in your pantry</p>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="filter-row">
+              <span class="filter-pill on">Highest Match</span>
+              <span class="filter-pill">Under 30 min</span>
+              <span class="filter-pill">Vegetarian</span>
+            </div>
+
+            <button class="recipe-card" data-go="screen-detail">
+              <div class="recipe-thumb" style="background:#C98A4B;"><svg viewBox="0 0 24 24"><use href="#i-serve"/></svg></div>
+              <div class="recipe-info">
+                <h3>Garlic Fried Rice</h3>
+                <div class="recipe-meta"><svg width="12" height="12" viewBox="0 0 24 24"><use href="#i-clock"/></svg>15 min · 1 missing</div>
+              </div>
+              <div class="match-ring" style="--pct:92; background:conic-gradient(var(--terracotta) calc(var(--pct)*1%), var(--line) 0);">
+                <div class="inner">92%</div>
+              </div>
+            </button>
+
+            <button class="recipe-card" data-go="screen-detail">
+              <div class="recipe-thumb" style="background:#7E9473;"><svg viewBox="0 0 24 24"><use href="#i-serve"/></svg></div>
+              <div class="recipe-info">
+                <h3>Ginisang Munggo</h3>
+                <div class="recipe-meta"><svg width="12" height="12" viewBox="0 0 24 24"><use href="#i-clock"/></svg>30 min · <span class="missing">2 missing</span></div>
+              </div>
+              <div class="match-ring" style="--pct:85; background:conic-gradient(var(--terracotta) calc(var(--pct)*1%), var(--line) 0);">
+                <div class="inner">85%</div>
+              </div>
+            </button>
+
+            <button class="recipe-card" data-go="screen-detail">
+              <div class="recipe-thumb" style="background:#B5764A;"><svg viewBox="0 0 24 24"><use href="#i-serve"/></svg></div>
+              <div class="recipe-info">
+                <h3>Tortang Talong</h3>
+                <div class="recipe-meta"><svg width="12" height="12" viewBox="0 0 24 24"><use href="#i-clock"/></svg>20 min · <span class="missing">2 missing</span></div>
+              </div>
+              <div class="match-ring" style="--pct:78; background:conic-gradient(var(--terracotta) calc(var(--pct)*1%), var(--line) 0);">
+                <div class="inner">78%</div>
+              </div>
+            </button>
+
+            <button class="recipe-card" data-go="screen-detail">
+              <div class="recipe-thumb" style="background:#D9A441;"><svg viewBox="0 0 24 24"><use href="#i-serve"/></svg></div>
+              <div class="recipe-info">
+                <h3>Chicken Tinola</h3>
+                <div class="recipe-meta"><svg width="12" height="12" viewBox="0 0 24 24"><use href="#i-clock"/></svg>45 min · <span class="missing">4 missing</span></div>
+              </div>
+              <div class="match-ring" style="--pct:60; background:conic-gradient(var(--terracotta) calc(var(--pct)*1%), var(--line) 0);">
+                <div class="inner">60%</div>
+              </div>
+            </button>
+          </div>
+          <div class="bottom-nav">
+            <button class="nav-item" data-go="screen-pantry"><svg viewBox="0 0 24 24"><use href="#i-pantry"/></svg>Pantry</button>
+            <button class="nav-item active" data-go="screen-recipes"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg>Recipes</button>
+            <button class="nav-item" data-go="screen-planner"><svg viewBox="0 0 24 24"><use href="#i-calendar"/></svg>Planner</button>
+            <button class="nav-item" data-go="screen-grocery"><svg viewBox="0 0 24 24"><use href="#i-cart"/></svg>List</button>
+          </div>
+        </div>
+
+        <!-- ================= RECIPE DETAIL ================= -->
+        <div class="screen" id="screen-detail">
+          <div class="scroll" style="padding:0 0 100px;">
+            <div class="detail-hero">
+              <div class="hero-top">
+                <button class="iconbtn" data-go="screen-recipes"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+                <button class="iconbtn"><svg viewBox="0 0 24 24"><use href="#i-heart"/></svg></button>
+              </div>
+              <h2>Ginisang Munggo</h2>
+            </div>
+            <div class="detail-meta">
+              <span><svg viewBox="0 0 24 24"><use href="#i-clock"/></svg>30 min</span>
+              <span><svg viewBox="0 0 24 24"><use href="#i-serve"/></svg>Serves 3</span>
+            </div>
+
+            <div class="match-banner">
+              <div class="ring-lg" style="--pct:85; background:conic-gradient(var(--sage) calc(var(--pct)*1%), var(--sage-soft) 0);">
+                <div class="inner">85%</div>
+              </div>
+              <div>
+                <strong>Great pantry match</strong>
+                <span>You have 6 of 8 ingredients already</span>
+              </div>
+            </div>
+
+            <div class="col-heads">
+              <div class="have-col">
+                <div class="col-title"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#i-check"/></svg>You Have</div>
+                <div class="ing-li">Mung beans</div>
+                <div class="ing-li">Garlic</div>
+                <div class="ing-li">Onion</div>
+                <div class="ing-li">Tomato</div>
+                <div class="ing-li">Fish sauce</div>
+                <div class="ing-li">Ampalaya leaves</div>
+              </div>
+              <div class="miss-col">
+                <div class="col-title"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#i-x"/></svg>Missing</div>
+                <div class="ing-li">Dried shrimp</div>
+                <div class="ing-li">Squash</div>
+              </div>
+            </div>
+
+            <div class="section-label" style="padding:0 20px;">Instructions</div>
+            <div class="steps">
+              <div class="step"><span class="step-num">1</span><p>Boil mung beans until soft, about 15 minutes. Set aside.</p></div>
+              <div class="step"><span class="step-num">2</span><p>Sauté garlic, onion, and tomato until fragrant.</p></div>
+              <div class="step"><span class="step-num">3</span><p>Add dried shrimp and squash, cook for 3 minutes.</p></div>
+              <div class="step"><span class="step-num">4</span><p>Stir in mung beans and fish sauce, simmer 10 minutes.</p></div>
+              <div class="step"><span class="step-num">5</span><p>Top with ampalaya leaves just before serving.</p></div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="btn-primary" data-go="screen-planner">Add to Meal Plan</button>
+            <button class="btn-outline" data-go="screen-grocery">Add Missing to Grocery List</button>
+          </div>
+        </div>
+
+        <!-- ================= PLANNER ================= -->
+        <div class="screen" id="screen-planner">
+          <div class="topbar" style="padding-top:14px;">
+            <div>
+              <h2>This Week's Plan</h2>
+              <p class="subtitle" style="padding:0;">Built to stretch your pantry across 7 days</p>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="day-row"><div class="day-badge"><span class="d">Mon</span><span class="n">18</span></div><div class="day-recipe"><strong>Garlic Fried Rice</strong><span>92% match · 15 min</span></div><button class="swap-btn">Swap</button></div>
+            <div class="day-row"><div class="day-badge"><span class="d">Tue</span><span class="n">19</span></div><div class="day-recipe"><strong>Ginisang Munggo</strong><span>85% match · 30 min</span></div><button class="swap-btn">Swap</button></div>
+            <div class="day-row"><div class="day-badge"><span class="d">Wed</span><span class="n">20</span></div><div class="day-recipe"><strong>Tortang Talong</strong><span>78% match · 20 min</span></div><button class="swap-btn">Swap</button></div>
+            <div class="day-row"><div class="day-badge"><span class="d">Thu</span><span class="n">21</span></div><div class="day-recipe"><strong>Egg Drop Soup</strong><span>90% match · 15 min</span></div><button class="swap-btn">Swap</button></div>
+            <div class="day-row"><div class="day-badge"><span class="d">Fri</span><span class="n">22</span></div><div class="day-recipe"><strong>Chicken Tinola</strong><span>60% match · 45 min</span></div><button class="swap-btn">Swap</button></div>
+            <div class="day-row"><div class="day-badge"><span class="d">Sat</span><span class="n">23</span></div><div class="day-recipe"><strong>Sinigang na Baboy</strong><span>70% match · 50 min</span></div><button class="swap-btn">Swap</button></div>
+            <div class="day-row"><div class="day-badge"><span class="d">Sun</span><span class="n">24</span></div><div class="day-recipe"><strong>Adobong Manok</strong><span>81% match · 40 min</span></div><button class="swap-btn">Swap</button></div>
+          </div>
+          <div class="sticky-cta">
+            <button class="btn-primary" data-go="screen-grocery"><svg viewBox="0 0 24 24"><use href="#i-cart"/></svg>Generate Grocery List</button>
+          </div>
+          <div class="bottom-nav">
+            <button class="nav-item" data-go="screen-pantry"><svg viewBox="0 0 24 24"><use href="#i-pantry"/></svg>Pantry</button>
+            <button class="nav-item" data-go="screen-recipes"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg>Recipes</button>
+            <button class="nav-item active" data-go="screen-planner"><svg viewBox="0 0 24 24"><use href="#i-calendar"/></svg>Planner</button>
+            <button class="nav-item" data-go="screen-grocery"><svg viewBox="0 0 24 24"><use href="#i-cart"/></svg>List</button>
+          </div>
+        </div>
+
+        <!-- ================= GROCERY LIST ================= -->
+        <div class="screen" id="screen-grocery">
+          <div class="topbar" style="padding-top:14px;">
+            <div>
+              <h2>Grocery List</h2>
+              <p class="subtitle" style="padding:0;">12 items to complete this week's plan</p>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="receipt">
+              <h4>SAHOG · SHOPPING LIST</h4>
+              <div class="sub">WEEK OF AUG 18–24</div>
+
+              <div class="receipt-cat">PRODUCE</div>
+              <div class="rline done"><span class="rbox"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="rname">Squash</span><span class="rprice">₱45</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Ampalaya (bitter gourd)</span><span class="rprice">₱35</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Sitaw (string beans)</span><span class="rprice">₱30</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Kangkong</span><span class="rprice">₱20</span></div>
+
+              <div class="receipt-cat">PROTEIN</div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Dried shrimp</span><span class="rprice">₱60</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Pork belly, 500g</span><span class="rprice">₱180</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Chicken thighs, 1kg</span><span class="rprice">₱210</span></div>
+
+              <div class="receipt-cat">PANTRY</div>
+              <div class="rline done"><span class="rbox"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="rname">Tamarind mix</span><span class="rprice">₱25</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Bay leaves</span><span class="rprice">₱15</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Vinegar, 1L</span><span class="rprice">₱40</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Cooking oil, 1L</span><span class="rprice">₱95</span></div>
+              <div class="rline"><span class="rbox"></span><span class="rname">Calamansi, 1 dozen</span><span class="rprice">₱30</span></div>
+
+              <div class="receipt-total"><span>ESTIMATED TOTAL</span><span>₱785</span></div>
+            </div>
+          </div>
+          <div class="sticky-cta">
+            <button class="btn-primary" data-go="screen-pantry"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Done Shopping</button>
+          </div>
+          <div class="bottom-nav">
+            <button class="nav-item" data-go="screen-pantry"><svg viewBox="0 0 24 24"><use href="#i-pantry"/></svg>Pantry</button>
+            <button class="nav-item" data-go="screen-recipes"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg>Recipes</button>
+            <button class="nav-item" data-go="screen-planner"><svg viewBox="0 0 24 24"><use href="#i-calendar"/></svg>Planner</button>
+            <button class="nav-item active" data-go="screen-grocery"><svg viewBox="0 0 24 24"><use href="#i-cart"/></svg>List</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dot-row small" style="margin-top:28px;"><span></span><span></span><span></span></div>
+
+<script>
+  const screens = document.querySelectorAll('.screen');
+  const navPills = document.querySelectorAll('#quicknav button');
+  let scanTimer = null;
+
+  function go(id){
+    screens.forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active');
+    navPills.forEach(p => p.classList.toggle('active', p.dataset.go === id));
+    if(scanTimer){ clearTimeout(scanTimer); scanTimer = null; }
+    if(id === 'screen-scanning'){
+      scanTimer = setTimeout(() => go('screen-confirm'), 1700);
+    }
+  }
+
+  document.querySelectorAll('[data-go]').forEach(el => {
+    el.addEventListener('click', () => go(el.dataset.go));
+  });
+
+  // toggle checkbox demo interactivity (confirm screen + grocery list)
+  document.querySelectorAll('.cbox').forEach(box => {
+    box.addEventListener('click', (e) => {
+      e.stopPropagation();
+      box.classList.toggle('off');
+    });
+  });
+  document.querySelectorAll('.rline').forEach(line => {
+    line.addEventListener('click', () => line.classList.toggle('done'));
+  });
+  // chip remove
+  document.querySelectorAll('.chip button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.chip').remove();
+    });
+  });
+</script>
+</body>
+</html>
